@@ -3559,7 +3559,7 @@ private:
 
 public:
   PackExpr(Expr *PackedExpr, QualType ExistType, QualType Subst, SourceLocation StartLoc, SourceLocation EndLoc) :
-   Expr(PackExprClass, ExistType, VK_RValue, OK_Ordinary, false, false, false, false),
+   Expr(PackExprClass, ExistType, VK_RValue, OK_Ordinary),
    StartLoc(StartLoc), EndLoc(EndLoc), PackedExpr(PackedExpr), ExistType(ExistType), Subst(Subst) {
     if(!ExistType->isExistentialType()) {
       llvm_unreachable("_Pack expression expects an existential type");
@@ -3624,8 +3624,8 @@ public:
 
   BoundsExpr(StmtClass StmtClass, QualType Ty, Kind BoundsKind, SourceLocation StartLoc,
              SourceLocation EndLoc)
-    : Expr(StmtClass, Ty, VK_RValue, OK_Ordinary, false,
-           false, false, false), StartLoc(StartLoc), EndLoc(EndLoc) {
+    : Expr(StmtClass, Ty, VK_RValue, OK_Ordinary),
+      StartLoc(StartLoc), EndLoc(EndLoc) {
     setKind(BoundsKind);
     setCompilerGenerated(false);
   }
@@ -3717,7 +3717,7 @@ class CastExpr : public Expr {
 protected:
   CastExpr(StmtClass SC, QualType ty, ExprValueKind VK, const CastKind kind,
            Expr *op, unsigned BasePathSize)
-      : Expr(SC, ty, VK, OK_Ordinary), Op(op) {
+      : Expr(SC, ty, VK, OK_Ordinary) {
     SubExprs[OP] = op;
     SubExprs[BOUNDS] = nullptr;
     SubExprs[NORMALIZED_BOUNDS] = nullptr;
@@ -6384,8 +6384,8 @@ private:
 public:
   InteropTypeExpr(QualType Ty, SourceLocation StartLoc, SourceLocation EndLoc,
                   TypeSourceInfo *TyAsWritten)
-    : Expr(InteropTypeExprClass, Ty, VK_RValue, OK_Ordinary, false,
-           false, false, false), StartLoc(StartLoc), EndLoc(EndLoc),
+    : Expr(InteropTypeExprClass, Ty, VK_RValue, OK_Ordinary),
+      StartLoc(StartLoc), EndLoc(EndLoc),
            TIInfo(TyAsWritten) {
     setCompilerGenerated(false);
   }
@@ -6438,7 +6438,7 @@ class PositionalParameterExpr : public Expr {
   public:
     PositionalParameterExpr(unsigned ParameterIndex, QualType QT) : Expr(
       PositionalParameterExprClass, QT, ExprValueKind::VK_LValue,
-      ExprObjectKind::OK_Ordinary, false, false, false, false),
+      ExprObjectKind::OK_Ordinary),
       Index(ParameterIndex) {
     }
 
@@ -6477,10 +6477,7 @@ class CHKCBindTemporaryExpr : public Expr {
 public:
   CHKCBindTemporaryExpr(Expr* SubExpr)
    : Expr(CHKCBindTemporaryExprClass, SubExpr->getType(),
-          SubExpr->getValueKind(), SubExpr->getObjectKind(), SubExpr->isTypeDependent(),
-          SubExpr->isValueDependent(),
-          SubExpr->isInstantiationDependent(),
-          SubExpr->containsUnexpandedParameterPack()), SubExpr(SubExpr) { }
+          SubExpr->getValueKind(), SubExpr->getObjectKind()), SubExpr(SubExpr) { }
 
   CHKCBindTemporaryExpr(EmptyShell Empty)
     : Expr(CHKCBindTemporaryExprClass, Empty), SubExpr(nullptr) {}
@@ -6524,14 +6521,14 @@ private:
 
 public:
   BoundsValueExpr(SourceLocation L, QualType Type, Kind K)
-    : Expr(BoundsValueExprClass, Type, VK_RValue, OK_Ordinary,
-           false, false, false, false), Temp(nullptr), Loc(L),
+    : Expr(BoundsValueExprClass, Type, VK_RValue, OK_Ordinary),
+      Temp(nullptr), Loc(L),
       ValueExprKind(K) { }
 
   // Create a use of an expression temporary.
   BoundsValueExpr(SourceLocation L, CHKCBindTemporaryExpr *Temp)
-    : Expr(BoundsValueExprClass, Temp->getType(), Temp->getValueKind(), OK_Ordinary,
-           false, false, false, false), Temp(Temp), Loc(L),
+    : Expr(BoundsValueExprClass, Temp->getType(), Temp->getValueKind(),
+           OK_Ordinary), Temp(Temp), Loc(L),
       ValueExprKind(Kind::Temporary) { }
 
   BoundsValueExpr(EmptyShell Empty) : Expr(BoundsValueExprClass, Empty) {}
