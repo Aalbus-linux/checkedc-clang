@@ -2775,7 +2775,7 @@ class PointerType : public Type, public llvm::FoldingSetNode {
               CheckedPointerKind ptrKind)
       : Type(Pointer, CanonicalPtr, Pointee->getDependence()),
         PointeeType(Pointee) {
-          PointerTypeBits.CheckedPointerKind = ptrKind;
+          PointerTypeBits.CheckedPointerKind = (unsigned)ptrKind;
         }
 
 public:
