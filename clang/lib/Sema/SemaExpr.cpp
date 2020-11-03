@@ -2027,7 +2027,7 @@ Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty, ExprValueKind VK,
   if (IsCheckedScope()) {
     if (Ty->isFunctionNoProtoType()) {
       Diag(NameInfo.getLoc(), diag::err_checked_scope_no_prototype_func);
-      return ExprError();
+      return nullptr;
     }
   }
 
@@ -2091,8 +2091,12 @@ Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty, ExprValueKind VK,
     DeclaratorDecl *DD = dyn_cast<DeclaratorDecl>(D);
     if (!DD)
       llvm_unreachable("unexpected DeclRef in checked scope");
-    return ConvertToFullyCheckedType(E, DD->getInteropTypeExpr(),
-                                     isa<ParmVarDecl>(D), VK);
+    ExprResult ER = ConvertToFullyCheckedType(E,
+                                              DD->getInteropTypeExpr(),
+                                              isa<ParmVarDecl>(D), VK);
+    if (ER.isInvalid())
+      return nullptr;
+    return dyn_cast<DeclRefExpr>(ER.get());
   }
 
   return E;
