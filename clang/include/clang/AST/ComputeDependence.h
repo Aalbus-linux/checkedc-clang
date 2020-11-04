@@ -100,6 +100,13 @@ class ObjCSubscriptRefExpr;
 class ObjCIsaExpr;
 class ObjCIndirectCopyRestoreExpr;
 class ObjCMessageExpr;
+// Checked C specific.
+class PackExpr;
+class BoundsExpr;
+class InteropTypeExpr;
+class PositionalParameterExpr;
+class CHKCBindTemporaryExpr;
+class BoundsValueExpr;
 
 // The following functions are called from constructors of `Expr`, so they
 // should not access anything beyond basic
@@ -189,6 +196,14 @@ ExprDependence computeDependence(ObjCSubscriptRefExpr *E);
 ExprDependence computeDependence(ObjCIsaExpr *E);
 ExprDependence computeDependence(ObjCIndirectCopyRestoreExpr *E);
 ExprDependence computeDependence(ObjCMessageExpr *E);
+
+// Checked C specific.
+ExprDependence computeDependence(PackExpr *E);
+ExprDependence computeDependence(InteropTypeExpr *E);
+ExprDependence computeDependence(BoundsExpr *E);
+ExprDependence computeDependence(PositionalParameterExpr *E);
+ExprDependence computeDependence(CHKCBindTemporaryExpr *E);
+ExprDependence computeDependence(BoundsValueExpr *E);
 
 } // namespace clang
 #endif

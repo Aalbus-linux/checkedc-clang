@@ -794,3 +794,28 @@ ExprDependence clang::computeDependence(ObjCMessageExpr *E) {
     D |= A->getDependence();
   return D;
 }
+
+// Checked C specific.
+ExprDependence clang::computeDependence(PackExpr *E) {
+  return ExprDependence::None;
+}
+
+ExprDependence clang::computeDependence(InteropTypeExpr *E) {
+  return ExprDependence::None;
+}
+
+ExprDependence clang::computeDependence(BoundsExpr *E) {
+  return ExprDependence::None;
+}
+
+ExprDependence clang::computeDependence(PositionalParameterExpr *E) {
+  return ExprDependence::None;
+}
+
+ExprDependence clang::computeDependence(CHKCBindTemporaryExpr *E) {
+  return E->getSubExpr()->getDependence();
+}
+
+ExprDependence clang::computeDependence(BoundsValueExpr *E) {
+  return ExprDependence::None;
+}
