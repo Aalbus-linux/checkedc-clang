@@ -334,6 +334,15 @@ void TypeLocWriter::VisitTypedefTypeLoc(TypedefTypeLoc TL) {
   Record.AddSourceLocation(TL.getNameLoc());
 }
 
+void TypeLocWriter::VisitTypeVariableTypeLoc(TypeVariableTypeLoc TL) {
+  Record.AddSourceLocation(TL.getNameLoc());
+}
+
+void TypeLocWriter::VisitExistentialTypeLoc(ExistentialTypeLoc TL) {
+  // TODO: implement
+  assert(false && "currently unimplemented");
+}
+
 void TypeLocWriter::VisitObjCTypeParamTypeLoc(ObjCTypeParamTypeLoc TL) {
   if (TL.getNumProtocols()) {
     Record.AddSourceLocation(TL.getProtocolLAngleLoc());
@@ -616,6 +625,7 @@ static void AddStmtsExprs(llvm::BitstreamWriter &Stream,
   RECORD(EXPR_CONDITIONAL_OPERATOR);
   RECORD(EXPR_IMPLICIT_CAST);
   RECORD(EXPR_CSTYLE_CAST);
+  RECORD(EXPR_BOUNDS_CAST);  
   RECORD(EXPR_COMPOUND_LITERAL);
   RECORD(EXPR_EXT_VECTOR_ELEMENT);
   RECORD(EXPR_INIT_LIST);

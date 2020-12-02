@@ -35,3 +35,26 @@ target_link_libraries(clangd
   clangdSupport
   ${CLANGD_XPC_LIBS}
   )
+
+add_clang_tool(icconv
+        ClangdMain.cpp
+        $<TARGET_OBJECTS:obj.clangDaemonTweaks>
+        )
+
+target_link_libraries(icconv
+  PRIVATE
+  clangAST
+  clangBasic
+  clangTidy
+  cconvClangDaemon
+  CConv
+  clangFormat
+  clangFrontend
+  clangSema
+  clangTooling
+  clangToolingCore
+  clangToolingSyntax
+  ${CLANGD_XPC_LIBS}
+  )
+
+target_compile_definitions(icconv PUBLIC INTERACTIVECCCONV=1)

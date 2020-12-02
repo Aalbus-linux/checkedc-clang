@@ -825,6 +825,12 @@ void ASTDeclReader::VisitEnumConstantDecl(EnumConstantDecl *ECD) {
 void ASTDeclReader::VisitDeclaratorDecl(DeclaratorDecl *DD) {
   VisitValueDecl(DD);
   DD->setInnerLocStart(readSourceLocation());
+
+  if (Record.readInt()) { // hasBoundsAnotations.
+    BoundsAnnotations BA = Record.readBoundsAnnotations();
+    DD->setBoundsAnnotations(Reader.getContext(), BA);
+  }
+
   if (Record.readInt()) { // hasExtInfo
     auto *Info = new (Reader.getContext()) DeclaratorDecl::ExtInfo();
     Record.readQualifierInfo(*Info);
@@ -862,6 +868,8 @@ void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   // after everything else is read.
 
   FD->setStorageClass(static_cast<StorageClass>(Record.readInt()));
+  FD->setCheckedSpecifier(static_cast<CheckedScopeSpecifier>(Record.readInt()));
+  FD->setWrittenCheckedSpecifier(static_cast<CheckedScopeSpecifier>(Record.readInt()));
   FD->setInlineSpecified(Record.readInt());
   FD->setImplicitlyInline(Record.readInt());
   FD->setVirtualAsWritten(Record.readInt());

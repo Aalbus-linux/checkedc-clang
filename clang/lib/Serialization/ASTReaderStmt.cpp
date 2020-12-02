@@ -153,11 +153,15 @@ void ASTStmtReader::VisitCompoundStmt(CompoundStmt *S) {
   VisitStmt(S);
   SmallVector<Stmt *, 16> Stmts;
   unsigned NumStmts = Record.readInt();
+  S->setCheckedSpecifiers(static_cast<CheckedScopeSpecifier>(Record.readInt()));
+  S->setWrittenCheckedSpecifiers(static_cast<CheckedScopeSpecifier>(Record.readInt()));
   while (NumStmts--)
     Stmts.push_back(Record.readSubStmt());
   S->setStmts(Stmts);
   S->CompoundStmtBits.LBraceLoc = readSourceLocation();
   S->RBraceLoc = readSourceLocation();
+  S->CSSLoc = readSourceLocation();
+  S->CSMLoc = readSourceLocation();
 }
 
 void ASTStmtReader::VisitSwitchCase(SwitchCase *S) {
@@ -594,6 +598,10 @@ void ASTStmtReader::VisitDeclRefExpr(DeclRefExpr *E) {
   E->DeclRefExprBits.HadMultipleCandidates = Record.readInt();
   E->DeclRefExprBits.RefersToEnclosingVariableOrCapture = Record.readInt();
   E->DeclRefExprBits.NonOdrUseReason = Record.readInt();
+
+  bool isGenericFunction = Record.readInt();
+  bool isItypeGenericFunction = Record.readInt();
+
   unsigned NumTemplateArgs = 0;
   if (E->hasTemplateKWAndArgsInfo())
     NumTemplateArgs = Record.readInt();
@@ -609,6 +617,17 @@ void ASTStmtReader::VisitDeclRefExpr(DeclRefExpr *E) {
     ReadTemplateKWAndArgsInfo(
         *E->getTrailingObjects<ASTTemplateKWAndArgsInfo>(),
         E->getTrailingObjects<TemplateArgumentLoc>(), NumTemplateArgs);
+
+  if (isGenericFunction || isItypeGenericFunction) {
+    unsigned numTypeNameInfos = Record.readInt();
+    SmallVector<TypeArgument, 16> typeArgumentInfos;
+    for (unsigned i = 0; i < numTypeNameInfos; i++) {
+      QualType tempType = Record.readType();
+      TypeSourceInfo *tempSourceInfo = Record.readTypeSourceInfo();
+      typeArgumentInfos.push_back({tempType, tempSourceInfo});
+    }
+    E->SetGenericInstInfo(Record.getContext(), typeArgumentInfos);
+  }
 
   E->setDecl(readDeclAs<ValueDecl>());
   E->setLocation(readSourceLocation());
@@ -709,6 +728,10 @@ void ASTStmtReader::VisitUnaryOperator(UnaryOperator *E) {
   E->setCanOverflow(Record.readInt());
   if (hasFP_Features)
     E->setStoredFPFeatures(FPOptionsOverride(Record.readInt()));
+  bool hasBoundsExpr = Record.readInt();
+  if (hasBoundsExpr) {
+    E->setBoundsExpr(Record.readBoundsExpr());
+  }
 }
 
 void ASTStmtReader::VisitOffsetOfExpr(OffsetOfExpr *E) {
@@ -924,6 +947,10 @@ void ASTStmtReader::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
   E->setLHS(Record.readSubExpr());
   E->setRHS(Record.readSubExpr());
   E->setRBracketLoc(readSourceLocation());
+  bool hasBoundsExpr = Record.readInt();
+  if (hasBoundsExpr) {
+    E->setBoundsExpr(Record.readBoundsExpr());
+  }
 }
 
 void ASTStmtReader::VisitMatrixSubscriptExpr(MatrixSubscriptExpr *E) {
@@ -1045,6 +1072,11 @@ void ASTStmtReader::VisitMemberExpr(MemberExpr *E) {
     ReadTemplateKWAndArgsInfo(
         *E->getTrailingObjects<ASTTemplateKWAndArgsInfo>(),
         E->getTrailingObjects<TemplateArgumentLoc>(), NumTemplateArgs);
+
+  // Checked C: Set bounds for the MemberExpr.
+  bool HasBoundsExpr = Record.readInt();
+  if (HasBoundsExpr)
+    E->setBoundsExpr(Record.readBoundsExpr());
 }
 
 void ASTStmtReader::VisitObjCIsaExpr(ObjCIsaExpr *E) {
@@ -1075,6 +1107,19 @@ void ASTStmtReader::VisitCastExpr(CastExpr *E) {
   assert(NumBaseSpecs == E->path_size());
   E->setSubExpr(Record.readSubExpr());
   E->setCastKind((CastKind)Record.readInt());
+  E->setBoundsSafeInterface((bool)Record.readInt());
+  bool hasBoundsExpr = Record.readInt();
+  if (hasBoundsExpr) {
+    E->setBoundsExpr(Record.readBoundsExpr());
+  }
+  bool hasCastBoundsExpr = Record.readInt();
+  if (hasCastBoundsExpr) {
+    E->setNormalizedBoundsExpr(Record.readBoundsExpr());
+  }
+  bool hasSubExprBoundsExpr = Record.readInt();
+  if (hasSubExprBoundsExpr) {
+    E->setSubExprBoundsExpr(Record.readBoundsExpr());
+  }
   CastExpr::path_iterator BaseI = E->path_begin();
   while (NumBaseSpecs--) {
     auto *BaseSpec = new (Record.getContext()) CXXBaseSpecifier;
@@ -1137,6 +1182,21 @@ void ASTStmtReader::VisitCStyleCastExpr(CStyleCastExpr *E) {
   VisitExplicitCastExpr(E);
   E->setLParenLoc(readSourceLocation());
   E->setRParenLoc(readSourceLocation());
+}
+
+void ASTStmtReader::VisitBoundsCastExpr(BoundsCastExpr *E) {
+  VisitExplicitCastExpr(E);
+  SourceRange R = readSourceRange();
+  E->LPLoc = R.getBegin();
+  E->RParenLoc = R.getEnd();
+  R= readSourceRange();
+  E->AngleBrackets=R;
+  E->setBoundsExpr(dyn_cast<BoundsExpr>(Record.readSubExpr()));
+}
+
+void ASTStmtReader::VisitPackExpr(PackExpr *E) {
+  // TODO: implement
+  llvm_unreachable("unimplemented");
 }
 
 void ASTStmtReader::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
@@ -1379,6 +1439,55 @@ void ASTStmtReader::VisitAtomicExpr(AtomicExpr *E) {
   E->BuiltinLoc = readSourceLocation();
   E->RParenLoc = readSourceLocation();
 }
+
+void ASTStmtReader::VisitCountBoundsExpr(CountBoundsExpr *E) {
+  VisitExpr(E);
+  E->setKind((BoundsExpr::Kind)Record.readInt());
+  E->setCountExpr(Record.readSubExpr());
+  E->StartLoc = readSourceLocation();
+  E->EndLoc = readSourceLocation();
+}
+
+void ASTStmtReader::VisitNullaryBoundsExpr(NullaryBoundsExpr *E) {
+  VisitExpr(E);
+  E->setKind((BoundsExpr::Kind)Record.readInt());
+  E->StartLoc = readSourceLocation();
+  E->EndLoc = readSourceLocation();
+}
+
+void ASTStmtReader::VisitRangeBoundsExpr(RangeBoundsExpr *E) {
+  VisitExpr(E);
+  E->setKind((BoundsExpr::Kind)Record.readInt());
+  E->setLowerExpr(Record.readSubExpr());
+  E->setUpperExpr(Record.readSubExpr());
+  E->StartLoc = readSourceLocation();
+  E->EndLoc = readSourceLocation();
+  // TODO: Github issue #332.  RelativeBoundsClause expressions are
+  // not being serialized.
+  E->setRelativeBoundsClause(nullptr);
+}
+
+void ASTStmtReader::VisitInteropTypeExpr(InteropTypeExpr *E) {
+  VisitExpr(E);
+  E->setTypeInfoAsWritten(readTypeSourceInfo());
+  E->StartLoc = readSourceLocation();
+  E->EndLoc = readSourceLocation();
+}
+
+void ASTStmtReader::VisitPositionalParameterExpr(
+  PositionalParameterExpr *E) {
+  VisitExpr(E);
+  E->Index = Record.readInt();
+}
+
+void ASTStmtReader::VisitBoundsValueExpr(
+  BoundsValueExpr *E) {
+  VisitExpr(E);
+  E->setKind((BoundsValueExpr::Kind) Record.readInt());
+  if (E->getKind() == BoundsValueExpr::Kind::Temporary)
+    llvm_unreachable("should not read use of bounds temporary");
+}
+
 
 //===----------------------------------------------------------------------===//
 // Objective-C Expressions and Statements
@@ -1829,6 +1938,11 @@ void ASTStmtReader::VisitCXXDefaultInitExpr(CXXDefaultInitExpr *E) {
 void ASTStmtReader::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
   VisitExpr(E);
   E->setTemporary(Record.readCXXTemporary());
+  E->setSubExpr(Record.readSubExpr());
+}
+
+void ASTStmtReader::VisitCHKCBindTemporaryExpr(CHKCBindTemporaryExpr *E) {
+  VisitExpr(E);
   E->setSubExpr(Record.readSubExpr());
 }
 
@@ -2709,6 +2823,23 @@ Expr *ASTReader::ReadExpr(ModuleFile &F) {
   return cast_or_null<Expr>(ReadStmt(F));
 }
 
+BoundsExpr *ASTReader::ReadBoundsExpr(ModuleFile &F) {
+  Expr *E = ReadExpr(F);
+  BoundsExpr *B = nullptr;
+  if (E) {
+    B = dyn_cast<BoundsExpr>(E);
+    assert(B && "failure reading BoundsExpr");
+  }
+  return B;
+}
+
+BoundsAnnotations ASTReader::ReadBoundsAnnotations(ModuleFile &F) {
+  Expr *Bounds = ReadExpr(F);
+  Expr *IType = ReadExpr(F);
+  return BoundsAnnotations(cast_or_null<BoundsExpr>(Bounds),
+                           cast_or_null<InteropTypeExpr>(IType));
+}
+
 Expr *ASTReader::ReadSubExpr() {
   return cast_or_null<Expr>(ReadSubStmt());
 }
@@ -3017,6 +3148,11 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
 
     case EXPR_CSTYLE_CAST:
       S = CStyleCastExpr::CreateEmpty(Context,
+                       /*PathSize*/ Record[ASTStmtReader::NumExprFields]);
+      break;
+      
+    case EXPR_BOUNDS_CAST:
+      S = BoundsCastExpr::CreateEmpty(Context,
                        /*PathSize*/ Record[ASTStmtReader::NumExprFields]);
       break;
 
@@ -3846,6 +3982,34 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
 
     case EXPR_ATOMIC:
       S = new (Context) AtomicExpr(Empty);
+      break;
+
+    case EXPR_COUNT_BOUNDS_EXPR:
+      S = new (Context) CountBoundsExpr(Empty);
+      break;
+
+    case EXPR_NULLARY_BOUNDS_EXPR:
+      S = new (Context) NullaryBoundsExpr(Empty);
+      break;
+
+    case EXPR_RANGE_BOUNDS_EXPR:
+      S = new (Context) RangeBoundsExpr(Empty);
+      break;
+
+    case EXPR_INTEROPTYPE_BOUNDS_ANNOTATION:
+      S = new (Context) InteropTypeExpr(Empty);
+      break;
+
+    case EXPR_POSITIONAL_PARAMETER_EXPR:
+      S = new (Context) PositionalParameterExpr(Empty);
+      break;
+
+    case EXPR_BOUNDS_VALUE_EXPR:
+      S = new (Context) BoundsValueExpr(Empty);
+      break;
+
+    case EXPR_CHKC_BIND_TEMPORARY_EXPR:
+      S = new (Context) CHKCBindTemporaryExpr(Empty);
       break;
 
     case EXPR_LAMBDA: {

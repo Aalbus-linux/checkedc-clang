@@ -37,9 +37,38 @@
 #include <string>
 #include <type_traits>
 #include <utility>
+#ifdef INTERACTIVECCCONV
+#include "CConvertDiagnostics.h"
+#endif
 
 namespace clang {
 namespace clangd {
+
+// FIXME: find a better name.
+class DiagnosticsConsumer {
+public:
+  virtual ~DiagnosticsConsumer() = default;
+
+  /// Called by ClangdServer when \p Diagnostics for \p File are ready.
+  virtual void onDiagnosticsReady(PathRef File,
+                                  std::vector<Diag> Diagnostics) = 0;
+  /// Called whenever the file status is updated.
+  virtual void onFileUpdated(PathRef File, const TUStatus &Status){};
+
+  /// Called by ClangdServer when some \p Highlightings for \p File are ready.
+  virtual void
+  onHighlightingsReady(PathRef File,
+                       std::vector<HighlightingToken> Highlightings) {}
+};
+
+#ifdef INTERACTIVECCCONV
+class CConvLSPCallBack {
+public:
+  virtual void ccConvResultsReady(std::string FileName,
+                                  bool ClearDiags = false) = 0;
+  virtual void sendCConvMessage(std::string MsgStr) = 0;
+};
+#endif
 
 /// When set, used by ClangdServer to get clang-tidy options for each particular
 /// file. Must be thread-safe. We use this instead of ClangTidyOptionsProvider
@@ -179,7 +208,12 @@ public:
   /// those arguments for subsequent reparses. However, ClangdServer will check
   /// if compilation arguments changed on calls to forceReparse().
   ClangdServer(const GlobalCompilationDatabase &CDB, const ThreadsafeFS &TFS,
-               const Options &Opts, Callbacks *Callbacks = nullptr);
+#ifdef INTERACTIVECCCONV
+               const Options &Opts, CConvInterface &CCInterface,
+#else
+               const Options &Opts,
+#endif
+               Callbacks *Callbacks = nullptr);
 
   /// Add a \p File to the list of tracked C++ files or update the contents if
   /// \p File is already tracked. Also schedules parsing of the AST for it on a
@@ -331,6 +365,21 @@ public:
   LLVM_NODISCARD bool
   blockUntilIdleForTest(llvm::Optional<double> TimeoutSeconds = 10);
 
+#ifdef INTERACTIVECCCONV
+  // ccconv specific commands
+  // collect and build initial set of constraints on the source
+  // files.
+
+  void executeCConvCommand(ExecuteCommandParams Params,
+                           CConvLSPCallBack *ConvCB);
+
+  void cconvCollectAndBuildInitialConstraints(CConvLSPCallBack *ConvCB);
+
+  CConvertDiagnostics CConvDiagInfo;
+
+  void cconvCloseDocument(std::string FileName);
+#endif
+
 private:
   void formatCode(PathRef File, llvm::StringRef Code,
                   ArrayRef<tooling::Range> Ranges,
@@ -346,6 +395,13 @@ private:
   config::Provider *ConfigProvider = nullptr;
 
   const ThreadsafeFS &TFS;
+
+#ifdef INTERACTIVECCCONV
+  void reportCConvDiagsForAllFiles(ConstraintsInfo &CcInfo, CConvLSPCallBack *ConvCB);
+  void clearCConvDiagsForAllFiles(ConstraintsInfo &CcInfo, CConvLSPCallBack *ConvCB);
+#endif
+
+  const FileSystemProvider &FSProvider;
 
   Path ResourceDir;
   // The index used to look up symbols. This could be:
@@ -385,6 +441,9 @@ private:
   // called before all other members to stop the worker thread that references
   // ClangdServer.
   TUScheduler WorkScheduler;
+#ifdef INTERACTIVECCCONV
+  CConvInterface &CConvInter;
+#endif
 };
 
 } // namespace clangd

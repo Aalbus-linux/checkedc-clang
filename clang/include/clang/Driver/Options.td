@@ -844,6 +844,26 @@ def fbuiltin : Flag<["-"], "fbuiltin">, Group<f_Group>, Flags<[CoreOption]>;
 def fbuiltin_module_map : Flag <["-"], "fbuiltin-module-map">, Group<f_Group>,
   Flags<[DriverOption]>, HelpText<"Load the clang builtins module map file.">;
 defm caret_diagnostics : OptOutFFlag<"caret-diagnostics", "", "">;
+def fcheckedc_extension : Flag<["-"], "fcheckedc-extension">, Group<f_Group>, Flags<[CC1Option]>,
+  HelpText<"Accept Checked C extension">;
+def fno_checkedc_extension : Flag<["-"], "fno-checkedc-extension">, Group<f_Group>, Flags<[CC1Option]>,
+  HelpText<"Do not accept Checked C extension">;
+def fcheckedc_convert_tool : Flag<["-"], "fcheckedc-convert-tool">, Group<f_Group>, Flags<[CC1Option]>,
+  HelpText<"Enable Checked C converter tool mode (supposed to be run by tools that needs only AST)">;
+def fdump_extracted_comparison_facts : Flag<["-"], "fdump-extracted-comparison-facts">, Group<f_Group>, Flags<[CC1Option]>,
+  HelpText<"Dump extracted comparison facts">;
+def fdump_widened_bounds : Flag<["-"], "fdump-widened-bounds">, Group<f_Group>, Flags<[CC1Option]>,
+  HelpText<"Dump widened bounds">;
+def fdump_preorder_ast : Flag<["-"], "fdump-preorder-ast">, Group<f_Group>, Flags<[CC1Option]>,
+  HelpText<"Dump the preorder AST">;
+def fdump_checking_state : Flag<["-"], "fdump-checking-state">, Group<f_Group>, Flags<[CC1Option]>,
+  HelpText<"Dump the state during bounds checking">;
+def fdump_inferred_bounds : Flag<["-"], "fdump-inferred-bounds">, Group<f_Group>, Flags<[CC1Option]>,
+  HelpText<"Dump inferred Checked C bounds for assignments and declarations">;
+def finject_verifier_calls : Flag<["-"], "finject-verifier-calls">, Group<f_Group>, Flags<[CC1Option]>,
+  HelpText<"Injects calls to VERIFIER_assume and VERIFIER_error in the bitcode">;
+def funchecked_pointers_dynamic_check : Flag<["-"], "funchecked-pointers-dynamic-check">, Group<f_Group>, Flags<[CC1Option]>,
+  HelpText<"Adds dynamic checks for unchecked pointers">;
 def fclang_abi_compat_EQ : Joined<["-"], "fclang-abi-compat=">, Group<f_clang_Group>,
   Flags<[CC1Option]>, MetaVarName<"<version>">, Values<"<major>.<minor>,latest">,
   HelpText<"Attempt to match the ABI of Clang <version>">;
@@ -2899,6 +2919,12 @@ def fintegrated_cc1 : Flag<["-"], "fintegrated-cc1">,
 def fno_integrated_cc1 : Flag<["-"], "fno-integrated-cc1">,
                          Flags<[CoreOption, DriverOption]>, Group<f_Group>,
                          HelpText<"Spawn a separate process for each cc1">;
+def fcheckedc_null_ptr_arith : Flag<["-"], "fcheckedc-null-ptr-arith">,
+  Group<f_Group>, Flags<[CC1Option]>,
+  HelpText<"Enable runtime null pointer arithmetic checks">;
+def fno_checkedc_null_ptr_arith : Flag<["-"], "fno-checkedc-null-ptr-arith">,
+  Group<f_Group>, Flags<[CC1Option]>,
+  HelpText<"Disable runtime null pointer arithmetic checks">;
 
 def : Flag<["-"], "integrated-as">, Alias<fintegrated_as>, Flags<[DriverOption]>;
 def : Flag<["-"], "no-integrated-as">, Alias<fno_integrated_as>,
