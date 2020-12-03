@@ -3090,6 +3090,8 @@ Expr *Expr::IgnoreUnlessSpelledInSource() {
         E = ExprNode;
     }
   }
+
+  return E;
 }
 
 Expr* Expr::IgnoreParenTmp() {
