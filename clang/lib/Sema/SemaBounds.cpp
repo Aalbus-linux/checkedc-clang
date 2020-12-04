@@ -4568,12 +4568,13 @@ namespace {
         else if (ArraySubscriptExpr *ArraySubExpr = dyn_cast<ArraySubscriptExpr>(SubExpr)) {
           Expr *Base = ArraySubExpr->getBase();
           Expr *Index = ArraySubExpr->getIdx();
-          BinaryOperator Sum(Base, Index, BinaryOperatorKind::BO_Add,
+          BinaryOperator Sum(Context, Base, Index,
+                             BinaryOperatorKind::BO_Add,
                              Base->getType(),
                              Base->getValueKind(),
                              Base->getObjectKind(),
                              SourceLocation(),
-                             FPOptions());
+                             FPOptionsOverride());
           return IsInvertible(X, &Sum);
         }
       }
@@ -4729,12 +4730,13 @@ namespace {
         else if (ArraySubscriptExpr *ArraySubExpr = dyn_cast<ArraySubscriptExpr>(SubExpr)) {
           Expr *Base = ArraySubExpr->getBase();
           Expr *Index = ArraySubExpr->getIdx();
-          BinaryOperator Sum(Base, Index, BinaryOperatorKind::BO_Add,
+          BinaryOperator Sum(Context, Base, Index,
+                             BinaryOperatorKind::BO_Add,
                              Base->getType(),
                              Base->getValueKind(),
                              Base->getObjectKind(),
                              SourceLocation(),
-                             FPOptions());
+                             FPOptionsOverride());
           return Inverse(X, F, &Sum);
         }
       }
