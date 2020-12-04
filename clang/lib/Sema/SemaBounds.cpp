@@ -128,12 +128,10 @@ namespace {
         RHS = EnsureRValue(SemaRef, RHS);
         if (BinaryOperator::isCompoundAssignmentOp(Op))
           Op = BinaryOperator::getOpForCompoundAssignment(Op);
-        return new (SemaRef.Context) BinaryOperator(LHS, RHS, Op,
-                                                    LHS->getType(),
-                                                    LHS->getValueKind(),
-                                                    LHS->getObjectKind(),
-                                                    SourceLocation(),
-                                                    FPOptions());
+        return BinaryOperator::Create(SemaRef.Context, LHS, RHS, Op,
+                                      LHS->getType(), LHS->getValueKind(),
+                                      LHS->getObjectKind(), SourceLocation(),
+                                      FPOptionsOverride());
       }
 
       // Create an unsigned integer literal.
