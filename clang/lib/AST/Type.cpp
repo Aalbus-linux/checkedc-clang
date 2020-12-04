@@ -204,13 +204,15 @@ unsigned ConstantArrayType::getMaxSizeBits(const ASTContext &Context) {
 void ConstantArrayType::Profile(llvm::FoldingSetNodeID &ID,
                                 const ASTContext &Context, QualType ET,
                                 const llvm::APInt &ArraySize,
-                                const Expr *SizeExpr, ArraySizeModifier SizeMod,
-                                unsigned TypeQuals) {
+                                const Expr *SizeExpr,
+                                ArraySizeModifier SizeMod,
+                                unsigned TypeQuals, CheckedArrayKind kind) {
   ID.AddPointer(ET.getAsOpaquePtr());
   ID.AddInteger(ArraySize.getZExtValue());
   ID.AddInteger(SizeMod);
   ID.AddInteger(TypeQuals);
   ID.AddBoolean(SizeExpr != 0);
+  ID.AddInteger((unsigned)kind);
   if (SizeExpr)
     SizeExpr->Profile(ID, Context, true);
 }
