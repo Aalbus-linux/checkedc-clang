@@ -7058,8 +7058,6 @@ void Parser::ParseParameterDeclarationClause(
        SmallVectorImpl<DeclaratorChunk::ParamInfo> &ParamInfo,
        SourceLocation &EllipsisLoc) {
 
-  DeclaratorContext DeclaratorCtx = D.getContext();
-
   // Avoid exceeding the maximum function scope depth.
   // See https://bugs.llvm.org/show_bug.cgi?id=19607
   // Note Sema::ActOnParamDeclarator calls ParmVarDecl::setScopeInfo with
