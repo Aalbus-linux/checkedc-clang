@@ -1574,9 +1574,6 @@ CanThrowResult Sema::canThrow(const Stmt *S) {
     return mergeCanThrow(CT, canThrow(TS->getTryBody()));
   }
 
-  case Stmt::NoStmtClass:
-    llvm_unreachable("Invalid class for statement");
-
   case Expr::PositionalParameterExprClass:
   case Expr::CountBoundsExprClass:
   case Expr::InteropTypeExprClass:
@@ -1593,7 +1590,8 @@ CanThrowResult Sema::canThrow(const Stmt *S) {
 #define LAST_STMT_RANGE(BASE, FIRST, LAST)
 #define EXPR(CLASS, PARENT)
 #define ABSTRACT_STMT(STMT)
-#include "clang/AST/StmtNodes.inc"
+  case Stmt::NoStmtClass:
+    llvm_unreachable("Invalid class for statement");
   }
   llvm_unreachable("Bogus StmtClass");
 }
