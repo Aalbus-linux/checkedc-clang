@@ -4130,6 +4130,7 @@ protected:
         reinterpret_cast<const char *>(this) + offsetOfTrailingStorage());
   }
 
+public:
   /// Build a binary operator, assuming that appropriate storage has been
   /// allocated for the trailing objects when needed.
   BinaryOperator(const ASTContext &Ctx, Expr *lhs, Expr *rhs, Opcode opc,
@@ -4141,7 +4142,6 @@ protected:
     BinaryOperatorBits.Opc = BO_Comma;
   }
 
-public:
   static BinaryOperator *CreateEmpty(const ASTContext &C, bool hasFPFeatures);
 
   static BinaryOperator *Create(const ASTContext &C, Expr *lhs, Expr *rhs,
