@@ -837,6 +837,8 @@ def forder_file_instrumentation : Flag<["-"], "forder-file-instrumentation">,
 
 defm addrsig : OptInFFlag<"addrsig", "Emit", "Don't emit", " an address-significance table", [CoreOption]>;
 defm blocks : OptInFFlag<"blocks", "Enable the 'blocks' language feature", "", "", [CoreOption]>;
+def f3c_tool : Flag<["-"], "f3c-tool">, Group<f_Group>, Flags<[CC1Option]>,
+  HelpText<"Enable 3C tool mode (supposed to be run by tools that needs only AST)">;
 def fbootclasspath_EQ : Joined<["-"], "fbootclasspath=">, Group<f_Group>;
 def fborland_extensions : Flag<["-"], "fborland-extensions">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Accept non-standard constructs supported by the Borland compiler">;
@@ -848,8 +850,6 @@ def fcheckedc_extension : Flag<["-"], "fcheckedc-extension">, Group<f_Group>, Fl
   HelpText<"Accept Checked C extension">;
 def fno_checkedc_extension : Flag<["-"], "fno-checkedc-extension">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Do not accept Checked C extension">;
-def fcheckedc_convert_tool : Flag<["-"], "fcheckedc-convert-tool">, Group<f_Group>, Flags<[CC1Option]>,
-  HelpText<"Enable Checked C converter tool mode (supposed to be run by tools that needs only AST)">;
 def fdump_extracted_comparison_facts : Flag<["-"], "fdump-extracted-comparison-facts">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Dump extracted comparison facts">;
 def fdump_widened_bounds : Flag<["-"], "fdump-widened-bounds">, Group<f_Group>, Flags<[CC1Option]>,

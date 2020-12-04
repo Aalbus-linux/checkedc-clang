@@ -18,8 +18,8 @@
 #include "Transport.h"
 #include "support/Context.h"
 #include "support/Path.h"
-#ifdef INTERACTIVECCCONV
-#include "clang/CConv/CConv.h"
+#ifdef INTERACTIVE3C
+#include "clang/3C/3C.h"
 #endif
 #include "clang/Tooling/Core/Replacement.h"
 #include "llvm/ADT/Optional.h"
@@ -37,10 +37,10 @@ class SymbolIndex;
 /// MessageHandler binds the implemented LSP methods (e.g. onInitialize) to
 /// corresponding JSON-RPC methods ("initialize").
 /// The server also supports $/cancelRequest (MessageHandler provides this).
-#ifdef INTERACTIVECCCONV
-class ClangdLSPServer : private ClangdServer::Callbacks {
+#ifdef INTERACTIVE3C
+class ClangdLSPServer : private ClangdServer::Callbacks, public _3CLSPCallBack {
 #else
-class ClangdLSPServer : private ClangdServer::Callbacks, public CConvLSPCallBack {
+class ClangdLSPServer : private ClangdServer::Callbacks {
 #endif
 public:
   /// If \p CompileCommandsDir has a value, compile_commands.json will be
@@ -53,8 +53,8 @@ public:
                   const clangd::RenameOptions &RenameOpts,
                   llvm::Optional<Path> CompileCommandsDir, bool UseDirBasedCDB,
                   llvm::Optional<OffsetEncoding> ForcedOffsetEncoding,
-#ifdef INTERACTIVECCCONV
-                  const ClangdServer::Options &Opts, CConvInterface &Cinter);
+#ifdef INTERACTIVE3C
+                  const ClangdServer::Options &Opts, _3CInterface &Cinter);
 #else
                   const ClangdServer::Options &Opts);
 #endif
@@ -68,9 +68,9 @@ public:
   /// \return Whether we shut down cleanly with a 'shutdown' -> 'exit' sequence.
   bool run();
 
-#ifdef INTERACTIVECCCONV
-  void ccConvResultsReady(std::string FileName, bool ClearDiags = false) override;
-  void sendCConvMessage(std::string MsgStr) override;
+#ifdef INTERACTIVE3C
+  void _3CResultsReady(std::string FileName, bool ClearDiags = false) override;
+  void send3CMessage(std::string MsgStr) override;
 #endif
 
 private:
@@ -107,8 +107,8 @@ private:
   void onFoldingRange(const FoldingRangeParams &,
                       Callback<std::vector<FoldingRange>>);
   void onCodeAction(const CodeActionParams &, Callback<llvm::json::Value>);
-#ifdef INTERACTIVECCCONV
-  // code lens : used to check cconv support
+#ifdef INTERACTIVE3C
+  // code lens : used to check 3C support
   void onCodeLens(const CodeLensParams &, Callback<llvm::json::Value>);
   void onCodeLensResolve(const CodeLens &Params,
                          Callback<llvm::json::Value> Reply);
@@ -284,8 +284,8 @@ private:
   llvm::Optional<OffsetEncoding> NegotiatedOffsetEncoding;
   // The ClangdServer is created by the "initialize" LSP method.
   llvm::Optional<ClangdServer> Server;
-#ifdef INTERACTIVECCCONV
-  CConvInterface &CCInterface;
+#ifdef INTERACTIVE3C
+  _3CInterface &The3CInterface;
 #endif
 };
 } // namespace clangd

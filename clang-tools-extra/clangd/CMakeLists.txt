@@ -30,8 +30,8 @@ set(LLVM_LINK_COMPONENTS
 
 add_clang_library(clangDaemon
   AST.cpp
-  CConvertCommands.cpp
-  CConvertDiagnostics.cpp
+  3CCommands.cpp
+  3CDiagnostics.cpp
   Cancellation.cpp
   ClangdLSPServer.cpp
   ClangdServer.cpp
@@ -132,10 +132,10 @@ clang_target_link_libraries(clangDaemon
   clangToolingSyntax
   )
 
-add_clang_library(cconvClangDaemon
+add_clang_library(3cClangDaemon
   AST.cpp
-  CConvertCommands.cpp
-  CConvertDiagnostics.cpp
+  3CCommands.cpp
+  3CDiagnostics.cpp
   Cancellation.cpp
   ClangdLSPServer.cpp
   ClangdServer.cpp
@@ -201,7 +201,7 @@ add_clang_library(cconvClangDaemon
   refactor/Tweak.cpp
 
   LINK_LIBS
-  CConv
+  clang3C
   clangAST
   clangASTMatchers
   clangBasic
@@ -239,7 +239,7 @@ add_clang_library(cconvClangDaemon
   ${CLANGD_ATOMIC_LIB}
       )
 
-  target_compile_definitions(obj.cconvClangDaemon PRIVATE INTERACTIVECCCONV=1)
+  target_compile_definitions(obj.3cClangDaemon PRIVATE INTERACTIVE3C=1)
 
 add_subdirectory(refactor/tweaks)
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
