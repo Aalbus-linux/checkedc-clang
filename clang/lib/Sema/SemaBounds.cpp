@@ -4751,11 +4751,13 @@ namespace {
       // Inverse(f, -e1) = Inverse(-f, e1)
       // Inverse(f, +e1) = Inverse(+f, e1)
       Expr *Child = ExprCreatorUtil::EnsureRValue(S, F);
-      Expr *F1 = new (S.Context) UnaryOperator(Child, Op, E->getType(),
-                                               E->getValueKind(),
-                                               E->getObjectKind(),
-                                               SourceLocation(),
-                                               E->canOverflow());
+      Expr *F1 = UnaryOperator::Create(S.Context, Child, Op,
+                                       E->getType(),
+                                       E->getValueKind(),
+                                       E->getObjectKind(),
+                                       SourceLocation(),
+                                       E->canOverflow(),
+                                       FPOptionsOverride());
       return Inverse(X, F1, SubExpr);
     }
 
