@@ -7077,7 +7077,9 @@ void Parser::ParseParameterDeclarationClause(
   // keep a list of tokens for the bounds expression.   Parsing/checking
   // bounds expressions for parameters is done in a scope that includes all
   // the parameters in the parameter list.
-  typedef std::pair<ParmVarDecl *, std::unique_ptr<CachedTokens>> BoundsExprInfo;
+  using BoundsExprInfo = std::tuple<ParmVarDecl *,
+                                    Declarator &,
+                                    std::unique_ptr<CachedTokens>>;
   // We are guessing that most functions take 4 or fewer parameters with
   // bounds expressions on them.
   SmallVector<BoundsExprInfo, 4> deferredBoundsExpressions;
@@ -7214,7 +7216,8 @@ void Parser::ParseParameterDeclarationClause(
           }
           else {
             if (!DeferredBoundsToks->empty()) {
-              deferredBoundsExpressions.emplace_back(Param, std::move(DeferredBoundsToks));
+              deferredBoundsExpressions.emplace_back(
+                Param, ParmDeclarator, std::move(DeferredBoundsToks));
               // If an interop type expression doesn't exist, try synthesizing
               // one implied by the presence of a bounds expression.
               if (!Annots.getInteropTypeExpr()) {
@@ -7320,9 +7323,10 @@ void Parser::ParseParameterDeclarationClause(
   } while (TryConsumeToken(tok::comma));
 
   // Now parse the deferred bounds expressions
-  for (auto &Pair : deferredBoundsExpressions) {
-    ParmVarDecl *Param = Pair.first;
-    std::unique_ptr<CachedTokens> Tokens = std::move(Pair.second);
+  for (auto &Tuple : deferredBoundsExpressions) {
+    ParmVarDecl *Param = std::get<0>(Tuple);
+    Declarator &D = std::get<1>(Tuple);
+    std::unique_ptr<CachedTokens> Tokens = std::move(std::get<2>(Tuple));
     BoundsAnnotations Annots;
     if (DeferredParseBoundsExpression(std::move(Tokens), Annots, D))
       Actions.ActOnInvalidBoundsDecl(Param);
